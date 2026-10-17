@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AuthoIPTV Web & NS Stream Player</title>
-  <!-- AuthoIPTV Dual Engines: hls.js + Shaka Player -->
+  <title>AuthoIPTV & NS Stream Player</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.15/hls.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
@@ -12,194 +11,48 @@
     :root {
       --bg: #121212;
       --surface: #1e1e1e;
-      --card: #252525;
-      --border: #444;
+      --card: #262626;
+      --border: #3d3d3d;
       --primary: #e64a19;
       --accent: #f2b705;
       --text: #f5f5f5;
       --muted: #aaaaaa;
     }
-    * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
-    body {
-      margin: 0;
-      background: var(--bg);
-      color: var(--text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-    }
-    /* Top Header */
-    header {
-      background: var(--surface);
-      padding: 12px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid var(--border);
-    }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 18px; }
-    .engine-badge {
-      font-size: 11px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      background: #333;
-      color: var(--accent);
-      border: 1px solid var(--border);
-    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { margin: 0; background: var(--bg); color: var(--text); display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+    header { background: var(--surface); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: 17px; }
+    .engine-badge { font-size: 11px; padding: 3px 8px; border-radius: 12px; background: #2c2c2c; color: var(--accent); border: 1px solid var(--border); }
     .nav-tabs { display: flex; gap: 8px; }
-    .tab-btn {
-      background: transparent;
-      color: var(--muted);
-      border: 1px solid transparent;
-      padding: 6px 14px;
-      border-radius: 20px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 500;
-    }
-    .tab-btn.active {
-      background: var(--accent);
-      color: #121212;
-      font-weight: 600;
-    }
-
-    /* Main Workspace */
-    .workspace {
-      display: grid;
-      grid-template-columns: 1fr 400px;
-      flex: 1;
-      overflow: hidden;
-    }
-    @media (max-width: 900px) {
-      .workspace { grid-template-columns: 1fr; overflow-y: auto; }
-    }
-
-    /* Left Column: Video & Audio/Stream Controls */
-    .player-section {
-      padding: 20px;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      overflow-y: auto;
-    }
-    .video-container {
-      width: 100%;
-      aspect-ratio: 16 / 9;
-      background: #000;
-      border-radius: 8px;
-      overflow: hidden;
-      box-shadow: 0 6px 24px rgba(0,0,0,0.6);
-      position: relative;
-    }
+    .tab-btn { background: transparent; color: var(--muted); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; cursor: pointer; font-size: 13px; }
+    .tab-btn.active { background: var(--accent); color: #111; border-color: var(--accent); font-weight: 600; }
+    .workspace { display: grid; grid-template-columns: 1fr 420px; flex: 1; overflow: hidden; }
+    @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; overflow-y: auto; } }
+    .player-section { padding: 18px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
+    .video-container { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.6); }
     video { width: 100%; height: 100%; }
-    .toolbar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      background: var(--surface);
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      flex-wrap: wrap;
-      gap: 10px;
-    }
-    .toolbar-group { display: flex; align-items: center; gap: 10px; font-size: 13px; }
-    .toolbar select { padding: 6px 10px; width: auto; background: var(--card); }
-    #statusBox {
-      font-size: 12px;
-      color: #ffab91;
-      font-family: monospace;
-    }
-
-    /* Right Column: Side Panel (Single Stream & Playlist Manager) */
-    .side-panel {
-      background: var(--surface);
-      border-left: 1px solid var(--border);
-      padding: 20px;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .panel-view { display: none; flex-direction: column; gap: 14px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap; gap: 10px; font-size: 13px; }
+    .side-panel { background: var(--surface); border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+    .panel-view { display: none; flex-direction: column; gap: 12px; height: 100%; }
     .panel-view.active { display: flex; }
-
-    /* Outlined Material Inputs */
     .input-group { position: relative; }
-    .input-group label {
-      position: absolute;
-      top: -8px;
-      left: 10px;
-      background: var(--surface);
-      padding: 0 5px;
-      font-size: 11px;
-      color: var(--muted);
-    }
-    input, select, textarea {
-      width: 100%;
-      padding: 12px;
-      background: transparent;
-      border: 1.5px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      font-size: 13px;
-      outline: none;
-    }
+    .input-group label { position: absolute; top: -8px; left: 10px; background: var(--surface); padding: 0 5px; font-size: 11px; color: var(--muted); }
+    input, select, textarea { width: 100%; padding: 11px; background: transparent; border: 1.5px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }
     input:focus, select:focus, textarea:focus { border-color: var(--primary); }
     select option { background: var(--surface); color: var(--text); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-
-    .btn-primary {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      font-size: 14px;
-    }
-    .btn-primary:hover { opacity: 0.92; }
-
-    /* Channel List */
-    .channel-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 420px;
-      overflow-y: auto;
-      padding-right: 4px;
-    }
-    .channel-card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      padding: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      transition: background 0.15s;
-    }
-    .channel-card:hover, .channel-card.active {
-      border-color: var(--primary);
-      background: #2e221f;
-    }
-    .channel-logo {
-      width: 36px;
-      height: 36px;
-      border-radius: 4px;
-      object-fit: contain;
-      background: #111;
-    }
+    .btn-primary { background: var(--primary); color: #fff; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
+    .channel-list { display: flex; flex-direction: column; gap: 6px; flex: 1; overflow-y: auto; }
+    .channel-card { background: var(--card); border: 1px solid var(--border); padding: 9px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+    .channel-card:hover, .channel-card.active { border-color: var(--primary); background: #2d201c; }
+    .channel-logo { width: 42px; height: 32px; border-radius: 4px; object-fit: cover; background: #111; }
     .channel-info { flex: 1; overflow: hidden; }
     .channel-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .channel-group { font-size: 11px; color: var(--muted); }
+    .channel-meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-top: 2px; }
+    .badge { font-size: 10px; padding: 1px 5px; border-radius: 4px; background: #383838; color: #ddd; font-weight: 600; }
+    .badge.drm { background: #4a2318; color: #ffab91; }
+    .badge.lang { background: #1b3a4b; color: #80deea; }
+    #statusBox { font-size: 12px; color: #ffab91; font-family: monospace; word-break: break-all; }
   </style>
 </head>
 <body>
@@ -207,69 +60,75 @@
 <header>
   <div class="brand">
     <span>AuthoIPTV Web Player</span>
-    <span class="engine-badge" id="activeEngineBadge">Idle (hls.js + Shaka)</span>
+    <span class="engine-badge" id="activeEngineBadge">Ready</span>
   </div>
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="switchTab('single')">Single Stream (NS Mode)</button>
-    <button class="tab-btn" onclick="switchTab('playlist')">M3U / JSON Playlist</button>
+    <button class="tab-btn active" id="btnTabPlaylist" onclick="switchTab('playlist')">Playlist Channels</button>
+    <button class="tab-btn" id="btnTabSingle" onclick="switchTab('single')">Single Stream (NS Mode)</button>
   </div>
 </header>
 
 <div class="workspace">
-  <!-- Video Player & Multi-Audio Controls -->
   <div class="player-section">
     <div class="video-container" data-shaka-player-container>
       <video autoplay controls data-shaka-player id="video"></video>
     </div>
 
     <div class="toolbar">
-      <div class="toolbar-group">
-        <label for="audioTrackSelect">Audio Track:</label>
-        <select id="audioTrackSelect" onchange="switchAudioTrack(this.value)">
+      <div style="display:flex; align-items:center; gap:8px;">
+        <label>Audio:</label>
+        <select id="audioTrackSelect" onchange="switchAudioTrack(this.value)" style="width:150px; padding:6px;">
           <option value="">Default</option>
         </select>
       </div>
-      <div class="toolbar-group">
-        <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
-          <input type="checkbox" id="useProxy" style="width:auto;">
-          Route via Cloudflare Header/CORS Proxy
-        </label>
-      </div>
+      <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
+        <input type="checkbox" id="useProxy" checked style="width:auto;">
+        Use Cloudflare Proxy (Bypasses CORS & Injects Headers)
+      </label>
     </div>
 
-    <div id="statusBox">Ready. Paste a pipe-delimited stream URL or load an M3U/JSON playlist.</div>
+    <div id="statusBox">Select any channel on the right to start streaming.</div>
   </div>
 
-  <!-- Right Panel: Single Stream (NS Player UI) & AuthoIPTV Playlist Manager -->
   <div class="side-panel">
+    <!-- PLAYLIST TAB -->
+    <div id="tab-playlist" class="panel-view active">
+      <div class="row">
+        <div class="input-group">
+          <label>Upload .m3u / .m3u8 File</label>
+          <input type="file" accept=".m3u,.m3u8,.txt" onchange="loadLocalPlaylist(event)" style="padding:7px;">
+        </div>
+        <div class="input-group">
+          <label>Search Channels</label>
+          <input type="text" id="channelSearch" placeholder="Search match, show, lang..." oninput="renderChannels()">
+        </div>
+      </div>
 
-    <!-- TAB 1: Single Stream Mode (NS Player Compatible) -->
-    <div id="tab-single" class="panel-view active">
+      <div class="channel-list" id="channelList"></div>
+    </div>
+
+    <!-- SINGLE STREAM (NS PLAYER) TAB -->
+    <div id="tab-single" class="panel-view">
       <div class="input-group">
         <label>Media Stream URL (Supports | pipe parameters)</label>
-        <input type="text" id="streamUrl" placeholder="https://example.com/index.mpd?|Cookie=...&drmLicense=...">
+        <input type="text" id="streamUrl" placeholder="https://.../index.mpd?|Cookie=...&drmLicense=...">
       </div>
-
       <div class="input-group">
         <label>Cookie Value</label>
-        <input type="text" id="cookieVal" placeholder="hdntl=exp=...">
+        <input type="text" id="cookieVal">
       </div>
-
       <div class="input-group">
         <label>Referer Value</label>
-        <input type="text" id="refererVal" placeholder="https://referer-domain.com/">
+        <input type="text" id="refererVal">
       </div>
-
       <div class="input-group">
         <label>Origin Value</label>
-        <input type="text" id="originVal" placeholder="https://origin-domain.com">
+        <input type="text" id="originVal">
       </div>
-
       <div class="input-group">
-        <label>DRM License (ClearKey kid:key or Widevine Server URL)</label>
-        <input type="text" id="drmLicense" placeholder="b9f1cb8a...:1960274b... or https://...">
+        <label>DRM License (KeyID:Key or Server URL)</label>
+        <input type="text" id="drmLicense">
       </div>
-
       <div class="row">
         <div class="input-group">
           <label>UserAgent</label>
@@ -284,40 +143,59 @@
           </select>
         </div>
       </div>
-
       <button class="btn-primary" onclick="playFromInputs()">&#9654; Play Stream</button>
     </div>
-
-    <!-- TAB 2: AuthoIPTV M3U / JSON Playlist Mode -->
-    <div id="tab-playlist" class="panel-view">
-      <div class="input-group">
-        <label>Playlist URL (.m3u, .m3u8, or .json)</label>
-        <input type="text" id="playlistUrl" placeholder="https://example.com/playlist.m3u">
-      </div>
-
-      <div class="row">
-        <div class="input-group">
-          <label>Playlist Fetch User-Agent</label>
-          <input type="text" id="playlistUa" placeholder="Optional Custom UA">
-        </div>
-        <div class="input-group">
-          <label>Or Upload File</label>
-          <input type="file" id="playlistFile" accept=".m3u,.m3u8,.json" onchange="loadLocalPlaylist(event)" style="padding:8px;">
-        </div>
-      </div>
-
-      <button class="btn-primary" onclick="fetchRemotePlaylist()">Load Remote Playlist</button>
-
-      <div class="input-group" style="margin-top:6px;">
-        <label>Search Channels</label>
-        <input type="text" id="channelSearch" placeholder="Filter by channel name or group..." oninput="renderChannels()">
-      </div>
-
-      <div class="channel-list" id="channelList"></div>
-    </div>
-
   </div>
 </div>
+
+<!-- Preloaded M3U8 Playlist Data -->
+<script id="defaultPlaylist" type="text/plain">
+#EXTM3U
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4230/1788186834230-b" group-title="Bigg Boss 24/7",Bb Bengali: 24X7 Stream
+https://live13mp.hotstar.com/out/v1/ben/1540082131_bengali_7a5c2b5d/incagbsgallow-biggboss-ben-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/5425/1788707405425-b" group-title="Bigg Boss 24/7",Bbs08 Malayalam: 24X7 Stream
+https://live13mp.hotstar.com/out/v1/mal/1540082128_malayalam_d6bfd223/incagbsgallow-biggboss-mal-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/3541/1788705493541-b" group-title="Bigg Boss 24/7",Bbs10 Telugu: 24X7 Stream
+https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-tel-2026/f129670ca03b4bb988c841f9bbdce777/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=8f4d329312383c4fd66498fcefa957d0~data=hdntl~hmac=99e3b6c668f7d6bde95da664f26333d481be1bd193bfc1ea8ff4e9cdb1824ff3
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/945/1788866480945-b" group-title="Bigg Boss 24/7",Bbs10 Tamil: 24X7 Stream
+https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-tam-2026/0e8f0050df134b708ab297477fbf0e86/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=e67ee7c71e40b2bb4d85bd91cd2ad67e~data=hdntl~hmac=a3806a929c8915ee5758cb0c8aa5e6dbba16becd75f7ddecadb3a2ba0ccb2694
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/7246/1788706787246-b" group-title="Bigg Boss 24/7",Bbs13 Kannada: 24X7 Stream
+https://live13mp.hotstar.com/out/v1/kan/1540082125_kannada_eaa18dac/incagbsgallow-biggboss-kan-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/1183/1792173961183-b" group-title="Bigg Boss 24/7",Bbs20 Hindi: 24 Hrs Channel
+https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-hin-2026/93e0d4ee03b34575bbf8f8a55824de63/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=8f4d329312383c4fd66498fcefa957d0~data=hdntl~hmac=99e3b6c668f7d6bde95da664f26333d481be1bd193bfc1ea8ff4e9cdb1824ff3
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/817/1792164450817-b" group-title="Badminton",BWF World Junior Championships 2026: Finals
+https://live13p.hotstar.com/hls/live/2123057/inallow-bwf-2025/eng/1540082269/15mindvrm01a42a19e3cec6467488f70266bd811e2e17october2026/master_ap.m3u8?a=ns&hdnea=exp=1792327759~acl=%2f*~id=bf47f50666225db2a5a6115fd1f80968~data=hdntl~hmac=e334cb7d4bc2839d2c89bd826d860a65e3a348df8a112ae0c2262168f2b816f5
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026393/1792046030123742_DP-World_India-Championship_Day3_landscape_thumb.jpg" group-title="SONY LIV",DP World India Championship - Day 3
+https://liveakmt-m-lr.slivcdn.com/v1/master/0085f7057986fc2f8467089bb19b8b7e4f1bf8d7/mediaT21beprod-PlaybackConfig/2119931/cricodi1710/ENG/std_lrl-800300010.m3u8?tracking_params=https://e138b425de774612937f377e0fdfb880.mediatailor.ap-south-1.amazonaws.com/v1/session/0085f7057986fc2f8467089bb19b8b7e4f1bf8d7/mediaT21beprod-PlaybackConfig/master.m3u8&adServer=GAM&playerParams[ContentSegmentUrlPrefix]=akaminlivetv&hdnea=exp=1792240793~acl=/*~id=8161aa6744e5141a9b214a99e57a823a-1792237189800~hmac=571923fb9957364be3c9dc382610f8837cfa9294442ab64424ccaf1dd28a2b59
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026488/1792152367474905_DP-World-Locker-Room-D3_landscape_thumb.jpg" group-title="SONY LIV",DP World Locker Room - Day 3
+https://sonydaimenew.akamaized.net/hls/live/2005444/Golf_DPW1710/ENG/master.m3u8?hdnea=exp=1792279661~acl=/*~id=82935608306541827699537448091102~hmac=b912e11485d025fbee49a8000070dda3076f6ead0c870e8f11d311ae26652413
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/6936/1792160446936-b" group-title="Premier League",Everton vs Chelsea (Stream 1)
+https://live09p.hotstar.com/mp2/inallow-epl-2026-27-1540083116/a505ffc96c2541428eeb7eda00ef8afc/index.mpd?ttl=86400&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928&a=ns|Cookie=hdntl=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928&User-Agent=Hotstar;in.startv.hotstar/25.02.24.8.11169@rtxcric(Android/15)&Referer=https://www.hotstar.com/&Origin=https://www.hotstar.com&drmScheme=clearkey&drmLicense=618cefdcfe094000a8222adab6fe0000:1c90ee160571480d97ed086559e2d468
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/6936/1792160446936-b" group-title="Premier League",Everton vs Chelsea (Stream 2)
+https://live09p.hotstar.com/mp2/inallow-epl-2026-27-1540083116/e0cb31cb943d4dc48105ab0b791afb51/index.mpd?ttl=86400&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928&a=ns|Cookie=hdntl=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928&User-Agent=Hotstar;in.startv.hotstar/25.02.24.8.11169@rtxcric(Android/15)&Referer=https://www.hotstar.com/&Origin=https://www.hotstar.com&drmScheme=clearkey&drmLicense=618cefdcfe094000a8222adab6fe0000:1c90ee160571480d97ed086559e2d468
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026459/1792130276555133_VCL26_Haryana-Hurricanes-vs-Emperia-Marathas_live_landscape_thumb.jpg" group-title="SONY LIV",Haryana Hurricanes vs Emperia Marathas (HIN)
+https://sonydaimenew.akamaized.net/hls/live/2120301/Volleyba1710/HIN/master.m3u8?hdnea=exp=1792282700~acl=/*~id=43257287105966377838888471374911~hmac=a284a35cfd8385826cec2853079e5f9e3d4185f5a67f62fbc24821d5557bda41
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026459/1792130276555133_VCL26_Haryana-Hurricanes-vs-Emperia-Marathas_live_landscape_thumb.jpg" group-title="SONY LIV",Haryana Hurricanes vs Emperia Marathas (ENG)
+https://sonydaimenew.akamaized.net/hls/live/2120302/Volleyba1710/ENG/master.m3u8?hdnea=exp=1792282700~acl=/*~id=43257287105966377838888471374911~hmac=a284a35cfd8385826cec2853079e5f9e3d4185f5a67f62fbc24821d5557bda41
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live11p.hotstar.com/hls/live/2024721/inallow-indvswi-2026/eng/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243159~acl=/hls/live/2024721/inallow-indvswi-2026/eng/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=25.01.19.4-ut=paid-ttl=1800-type=paid-raf=1792241959-~hmac=644c512f62084b1a7bbe1db050cb5304c70c72402fc8e2c220dbb6742fd013a7
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live12p.hotstar.com/hls/live/2024726/inallow-indvswi-2026/hin/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243164~acl=/hls/live/2024726/inallow-indvswi-2026/hin/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=26.07.18.5-ut=paid-ttl=1800-type=paid-raf=1792241964-~hmac=3822c0b9dc54da68f7634add41ddbb329c5924e4618e637cc0ea67fbd56e481f
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live15p.hotstar.com/hls/live/2004207/inallow-indvswi-2026/tel/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243164~acl=/hls/live/2004207/inallow-indvswi-2026/tel/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=25.06.03.0-ut=paid-ttl=1800-type=paid-raf=1792241964-~hmac=39e2e0da705104e074954c955929810bcad5eb2a9c20754a5738e7c058186b39
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live13p.hotstar.com/hls/live/2003889/inallow-indvswi-2026/tam/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243160~acl=/hls/live/2003889/inallow-indvswi-2026/tam/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=24.06.25.4-ut=paid-ttl=1800-type=paid-raf=1792241960-~hmac=7014298de0ed2e9e8cf3037a3fa511318d461b91d61c7eac821e365b3e351164
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live15p.hotstar.com/hls/live/2004209/inallow-indvswi-2026/kan/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243163~acl=/hls/live/2004209/inallow-indvswi-2026/kan/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=24.01.16.3-ut=paid-ttl=1800-type=paid-raf=1792241963-~hmac=731db3f1f92995197b44ca115ac8d75ad87577046b2d18ab439e0fc0c0ed57d7
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/4524/1792147234524-b" group-title="IND vs WI 5th T20I",India vs West Indies: 5th T20I
+https://live15p.hotstar.com/hls/live/2004211/inallow-indvswi-2026/ben/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap.m3u8?a=ns&hdnea=exp=1792243164~acl=/hls/live/2004211/inallow-indvswi-2026/ben/1540080173/15mindvrm0163e94d10072246cb8a66a8fc6796a66417october2026/master_ap*~data=ip=Uwksi0uNJ5wAsxcetlHmlc-userid=RhpefJhB9PhiTO1e6Zdi0jf4jp2C9lr8oZbNE3FJ8l9q-did=jVvFOaxqX6LlICZnUDb2kR2G6rOPiJ4AuaZF2LUoSQLF-cc=in-bl=jhs-sp=HotstarBundle-ctype=sport_live-de=7-pl=androidtv-ap=26.06.18.0-ut=paid-ttl=1800-type=paid-raf=1792241964-~hmac=48546c2a1326af316dd5fdcdb3a693def869d97b53b02fb6621311ee09e4b357
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026502/1792155325043755_ISL26_KSHI-vs-Odisha-FC_live_landscape_thumb.jpg" group-title="SONY LIV",Inter Kashi vs Odisha FC (HIN)
+https://sonydaimenew.akamaized.net/hls/live/2120304/Footlive1710/HIN/master.m3u8?hdnea=exp=1792279661~acl=/*~id=82935608306541827699537448091102~hmac=b912e11485d025fbee49a8000070dda3076f6ead0c870e8f11d311ae26652413
+#EXTINF:-1 tvg-logo="https://origin-staticv2.sonyliv.com/videoasset_images/manage_file/1000026502/1792155325043755_ISL26_KSHI-vs-Odisha-FC_live_landscape_thumb.jpg" group-title="SONY LIV",Inter Kashi vs Odisha FC (ENG)
+https://sonydaimenew.akamaized.net/hls/live/2120303/Footlive1710/ENG/master.m3u8?hdnea=exp=1792279661~acl=/*~id=82935608306541827699537448091102~hmac=b912e11485d025fbee49a8000070dda3076f6ead0c870e8f11d311ae26652413
+#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/3874/1792150083874-b" group-title="Football",Siang Warriors vs Kameng United
+https://live14p.hotstar.com/hls/live/2123115/inallow-inal-2026/eng/1540082738/15mindvrm0110d8c130198a4c9fb13bc3734850c54017october2026/master_ap.m3u8?a=ns&hdnea=exp=1792327759~acl=%2f*~id=bfa1222147e85266df054a053b10fb58~data=hdntl~hmac=33294e930abe99e336680766d5f8a0c898bf0464d081a64c39738aa842ffb5ae
+</script>
 
 <script>
   let shakaPlayer = null;
@@ -325,7 +203,6 @@
   let allChannels = [];
   const videoEl = document.getElementById('video');
 
-  // Initialize Shaka Player on load
   document.addEventListener('shaka-ui-loaded', () => {
     shaka.polyfill.installAll();
     const ui = videoEl['ui'];
@@ -333,98 +210,95 @@
     shakaPlayer.addEventListener('error', (e) => {
       setStatus(`Shaka Error ${e.detail.code}: ${e.detail.message}`);
     });
+    // Load the built-in playlist automatically
+    parsePlaylistContent(document.getElementById('defaultPlaylist').textContent, 'Preloaded M3U8');
   });
 
-  function setStatus(msg) {
-    document.getElementById('statusBox').textContent = msg;
-  }
-
-  function setEngineBadge(name) {
-    document.getElementById('activeEngineBadge').textContent = name;
-  }
+  function setStatus(msg) { document.getElementById('statusBox').textContent = msg; }
+  function setEngineBadge(name) { document.getElementById('activeEngineBadge').textContent = name; }
 
   function switchTab(tab) {
-    document.querySelectorAll('.tab-btn').forEach((b, i) => {
-      b.classList.toggle('active', (tab === 'single' && i === 0) || (tab === 'playlist' && i === 1));
-    });
-    document.getElementById('tab-single').classList.toggle('active', tab === 'single');
+    document.getElementById('btnTabPlaylist').classList.toggle('active', tab === 'playlist');
+    document.getElementById('btnTabSingle').classList.toggle('active', tab === 'single');
     document.getElementById('tab-playlist').classList.toggle('active', tab === 'playlist');
+    document.getElementById('tab-single').classList.toggle('active', tab === 'single');
   }
 
-  // ============================================================================
-  // 1. PIPE-DELIMITED URL PARSER (NS Player & AuthoIPTV Inline Format)
-  // ============================================================================
-  function parsePipeUrl(rawUrl) {
-    const result = {
-      url: rawUrl.trim(),
-      cookie: '',
-      referer: '',
-      origin: '',
-      userAgent: 'Default',
-      drmScheme: 'none',
-      drmLicense: ''
+  // Detect language from URL path or query (e.g., /eng/, /hin/, /tel/, /tam/, /kan/, /ben/, /mal/)
+  function detectLanguage(url) {
+    const map = {
+      '/eng/': 'ENG', '/hin/': 'HIN', '/tel/': 'TEL', '/tam/': 'TAM',
+      '/kan/': 'KAN', '/ben/': 'BEN', '/mal/': 'MAL', '/bho/': 'BHO', '/har/': 'HAR',
+      '-hin-': 'HIN', '-tel-': 'TEL', '-tam-': 'TAM', '-kan-': 'KAN', '-ben-': 'BEN', '-mal-': 'MAL'
     };
-    if (!result.url.includes('|')) return result;
-
-    const [base, paramStr] = result.url.split('|', 2);
-    result.url = base.replace(/\?$/, '');
-
-    paramStr.split('&').forEach(pair => {
-      const idx = pair.indexOf('=');
-      if (idx === -1) return;
-      const k = pair.substring(0, idx).trim().toLowerCase();
-      const v = decodeURIComponent(pair.substring(idx + 1).trim());
-
-      if (k === 'cookie') result.cookie = v;
-      else if (k === 'referer') result.referer = v;
-      else if (k === 'origin') result.origin = v;
-      else if (k === 'user-agent') result.userAgent = v;
-      else if (k === 'drmscheme') result.drmScheme = v.toLowerCase();
-      else if (k === 'drmlicense' || k === 'drm_key') result.drmLicense = v;
-    });
-    return result;
+    const lower = url.toLowerCase();
+    for (const [pattern, code] of Object.entries(map)) {
+      if (lower.includes(pattern)) return code;
+    }
+    const langParam = lower.match(/language=([a-z]+)/);
+    if (langParam) return langParam[1].substring(0, 3).toUpperCase();
+    return '';
   }
 
-  // Auto-fill fields when user pastes a pipe-delimited URL into Media Stream URL
-  document.getElementById('streamUrl').addEventListener('input', (e) => {
-    const val = e.target.value;
-    if (!val.includes('|')) return;
-    const parsed = parsePipeUrl(val);
-
-    e.target.value = parsed.url;
-    if (parsed.cookie) document.getElementById('cookieVal').value = parsed.cookie;
-    if (parsed.referer) document.getElementById('refererVal').value = parsed.referer;
-    if (parsed.origin) document.getElementById('originVal').value = parsed.origin;
-    if (parsed.userAgent !== 'Default') document.getElementById('userAgent').value = parsed.userAgent;
-    if (parsed.drmScheme !== 'none') document.getElementById('drmScheme').value = parsed.drmScheme;
-    if (parsed.drmLicense) document.getElementById('drmLicense').value = parsed.drmLicense;
-
-    if (parsed.cookie || parsed.referer || parsed.origin || parsed.userAgent !== 'Default') {
-      document.getElementById('useProxy').checked = true;
+  // Parse NS Player / Kodi Pipe (|) URLs safely (even with unencoded '=' inside Cookie values)
+  function parsePipeUrl(rawUrl) {
+    const res = { url: rawUrl.trim(), cookie: '', referer: '', origin: '', userAgent: 'Default', drmScheme: 'none', drmLicense: '' };
+    if (!res.url.includes('|')) {
+      // Auto-upgrade http:// to https:// for Hotstar CDN
+      if (res.url.startsWith('http://')) res.url = res.url.replace('http://', 'https://');
+      return res;
     }
-    setStatus('Extracted inline pipe (|) headers & DRM configuration.');
+
+    const [base, paramStr] = res.url.split('|', 2);
+    res.url = base.replace(/\?$/, '');
+    if (res.url.startsWith('http://')) res.url = res.url.replace('http://', 'https://');
+
+    // Split on &(cookie|user-agent|referer|origin|drmscheme|drmlicense)= case-insensitively
+    const regex = /(?:^|&)(cookie|user-agent|referer|origin|drmscheme|drmlicense|drm_key)=/gi;
+    const matches = [...paramStr.matchAll(regex)];
+
+    for (let i = 0; i < matches.length; i++) {
+      const key = matches[i][1].toLowerCase();
+      const startIdx = matches[i].index + matches[i][0].length;
+      const endIdx = (i + 1 < matches.length) ? matches[i + 1].index : paramStr.length;
+      const rawVal = paramStr.substring(startIdx, endIdx);
+      let val = rawVal;
+      try { val = decodeURIComponent(rawVal); } catch {}
+
+      if (key === 'cookie') res.cookie = val;
+      else if (key === 'referer') res.referer = val;
+      else if (key === 'origin') res.origin = val;
+      else if (key === 'user-agent') res.userAgent = val;
+      else if (key === 'drmscheme') res.drmScheme = val.toLowerCase();
+      else if (key === 'drmlicense' || key === 'drm_key') res.drmLicense = val;
+    }
+    return res;
+  }
+
+  document.getElementById('streamUrl').addEventListener('input', (e) => {
+    if (!e.target.value.includes('|')) return;
+    const p = parsePipeUrl(e.target.value);
+    e.target.value = p.url;
+    document.getElementById('cookieVal').value = p.cookie;
+    document.getElementById('refererVal').value = p.referer;
+    document.getElementById('originVal').value = p.origin;
+    document.getElementById('userAgent').value = p.userAgent;
+    document.getElementById('drmScheme').value = p.drmScheme;
+    document.getElementById('drmLicense').value = p.drmLicense;
   });
 
-  // ============================================================================
-  // 2. AUTHOIPTV DUAL-ENGINE STREAM LOADER (hls.js for HLS, Shaka for DASH/DRM)
-  // ============================================================================
-  function buildProxyUrl(targetUrl, headers) {
+  function buildProxyUrl(targetUrl, cfg) {
     const proxy = new URL('/proxy', window.location.origin);
     proxy.searchParams.set('url', targetUrl);
-    if (headers.cookie) proxy.searchParams.set('cookie', headers.cookie);
-    if (headers.referer) proxy.searchParams.set('referer', headers.referer);
-    if (headers.origin) proxy.searchParams.set('origin', headers.origin);
-    if (headers.userAgent && headers.userAgent !== 'Default') {
-      proxy.searchParams.set('ua', headers.userAgent);
-    }
+    if (cfg.cookie) proxy.searchParams.set('cookie', cfg.cookie);
+    if (cfg.referer) proxy.searchParams.set('referer', cfg.referer);
+    if (cfg.origin) proxy.searchParams.set('origin', cfg.origin);
+    if (cfg.userAgent && cfg.userAgent !== 'Default') proxy.searchParams.set('ua', cfg.userAgent);
     return proxy.toString();
   }
 
   async function destroyActivePlayers() {
-    if (hlsPlayer) {
-      hlsPlayer.destroy();
-      hlsPlayer = null;
-    }
+    if (hlsPlayer) { hlsPlayer.destroy(); hlsPlayer = null; }
     if (shakaPlayer) {
       await shakaPlayer.unload();
       shakaPlayer.getNetworkingEngine().clearAllRequestFilters();
@@ -433,7 +307,7 @@
   }
 
   function playFromInputs() {
-    const config = {
+    startPlayback({
       url: document.getElementById('streamUrl').value.trim(),
       cookie: document.getElementById('cookieVal').value.trim(),
       referer: document.getElementById('refererVal').value.trim(),
@@ -442,162 +316,82 @@
       drmScheme: document.getElementById('drmScheme').value,
       drmLicense: document.getElementById('drmLicense').value.trim(),
       useProxy: document.getElementById('useProxy').checked
-    };
-    startPlayback(config);
+    });
   }
 
-  async function startPlayback(config) {
-    if (!config.url) {
-      setStatus('Error: Stream URL is empty.');
-      return;
-    }
-
+  async function startPlayback(cfg) {
+    if (!cfg.url) return setStatus('Please provide a valid Stream URL.');
     await destroyActivePlayers();
 
-    const isDashOrDrm =
-      config.url.includes('.mpd') ||
-      (config.drmScheme !== 'none' && config.drmLicense !== '');
+    const isDashOrDrm = cfg.url.includes('.mpd') || (cfg.drmScheme !== 'none' && cfg.drmLicense !== '');
 
-    // Route 1: HLS Playback via hls.js (AuthoIPTV default for .m3u8 without DRM)
-    if (!isDashOrDrm && Hls.isSupported() && config.url.includes('.m3u8')) {
-      setEngineBadge('Engine: hls.js (HLS)');
-      setStatus('Loading HLS stream via hls.js...');
+    // Engine 1: hls.js for unencrypted .m3u8 streams
+    if (!isDashOrDrm && Hls.isSupported() && cfg.url.includes('.m3u8')) {
+      setEngineBadge('hls.js (HLS)');
+      setStatus('Loading HLS stream...');
 
-      hlsPlayer = new Hls({
-        xhrSetup: function(xhr, url) {
-          if (config.useProxy) {
-            const proxied = buildProxyUrl(url, config);
-            xhr.open('GET', proxied, true);
-          }
-        }
-      });
-
-      const finalManifestUrl = config.useProxy ? buildProxyUrl(config.url, config) : config.url;
-      hlsPlayer.loadSource(finalManifestUrl);
+      hlsPlayer = new Hls();
+      const sourceUrl = cfg.useProxy ? buildProxyUrl(cfg.url, cfg) : cfg.url;
+      hlsPlayer.loadSource(sourceUrl);
       hlsPlayer.attachMedia(videoEl);
 
       hlsPlayer.on(Hls.Events.MANIFEST_PARSED, () => {
         videoEl.play();
-        populateHlsAudioTracks();
-        setStatus('Playing HLS stream via hls.js.');
+        const sel = document.getElementById('audioTrackSelect');
+        sel.innerHTML = '';
+        hlsPlayer.audioTracks.forEach((t, i) => {
+          const opt = document.createElement('option');
+          opt.value = `hls:${i}`;
+          opt.textContent = `${t.name || t.lang || 'Track ' + (i + 1)}`;
+          if (i === hlsPlayer.audioTrack) opt.selected = true;
+          sel.appendChild(opt);
+        });
+        setStatus('Playing HLS stream.');
       });
 
-      hlsPlayer.on(Hls.Events.ERROR, (event, data) => {
-        if (data.fatal) {
-          setStatus(`hls.js Fatal Error: ${data.details}. Try enabling the Cloudflare Proxy checkbox.`);
-        }
+      hlsPlayer.on(Hls.Events.ERROR, (ev, data) => {
+        if (data.fatal) setStatus(`HLS Error: ${data.details}. Note: Check if IP-bound token (hdnea) has expired.`);
       });
       return;
     }
 
-    // Route 2: DASH & ClearKey / Widevine DRM Playback via Shaka Player
-    setEngineBadge('Engine: Shaka Player (DASH/DRM)');
-    setStatus('Loading stream via Shaka Player...');
-
+    // Engine 2: Shaka Player for MPEG-DASH (.mpd) & ClearKey/Widevine DRM
+    setEngineBadge('Shaka Player (DASH/DRM)');
+    setStatus('Loading DASH/DRM stream...');
     shakaPlayer.resetConfiguration();
 
-    // Configure DRM
     const drmConfig = {};
-    if (config.drmScheme === 'clearkey' && config.drmLicense.includes(':')) {
+    if (cfg.drmScheme === 'clearkey' && cfg.drmLicense.includes(':')) {
       const clearKeys = {};
-      config.drmLicense.split(',').forEach(pair => {
+      cfg.drmLicense.split(',').forEach(pair => {
         const [kid, key] = pair.split(':');
         if (kid && key) clearKeys[kid.trim()] = key.trim();
       });
       drmConfig.clearKeys = clearKeys;
-    } else if (config.drmScheme === 'widevine' && config.drmLicense.startsWith('http')) {
-      drmConfig.servers = { 'com.widevine.alpha': config.drmLicense };
+    } else if (cfg.drmScheme === 'widevine' && cfg.drmLicense.startsWith('http')) {
+      drmConfig.servers = { 'com.widevine.alpha': cfg.drmLicense };
     }
     shakaPlayer.configure({ drm: drmConfig });
 
-    // Configure Custom Headers via Proxy Filter
-    if (config.useProxy) {
+    if (cfg.useProxy) {
       shakaPlayer.getNetworkingEngine().registerRequestFilter((type, request) => {
-        request.uris[0] = buildProxyUrl(request.uris[0], config);
+        request.uris[0] = buildProxyUrl(request.uris[0], cfg);
       });
     }
 
     try {
-      await shakaPlayer.load(config.url);
+      await shakaPlayer.load(cfg.url);
       videoEl.play();
-      populateShakaAudioTracks();
-      setStatus('Playing stream via Shaka Player.');
+      setStatus('Playing DASH/DRM stream.');
     } catch (err) {
-      setStatus(`Shaka Playback Failed (Code ${err.code}). Verify DRM keys or toggle Proxy.`);
-      console.error(err);
+      setStatus(`Shaka Error (Code ${err.code}). Verify ClearKey or token expiration.`);
     }
-  }
-
-  // ============================================================================
-  // 3. MULTI-AUDIO TRACK SELECTION (AuthoIPTV Audio Switcher)
-  // ============================================================================
-  function populateHlsAudioTracks() {
-    const select = document.getElementById('audioTrackSelect');
-    select.innerHTML = '';
-    hlsPlayer.audioTracks.forEach((track, index) => {
-      const opt = document.createElement('option');
-      opt.value = `hls:${index}`;
-      opt.textContent = `${track.name || track.lang || 'Track ' + (index + 1)} (${track.lang || 'und'})`;
-      if (index === hlsPlayer.audioTrack) opt.selected = true;
-      select.appendChild(opt);
-    });
-  }
-
-  function populateShakaAudioTracks() {
-    const select = document.getElementById('audioTrackSelect');
-    select.innerHTML = '';
-    const tracks = shakaPlayer.getVariantTracks();
-    const seenLangs = new Set();
-
-    tracks.forEach(track => {
-      const key = `${track.language}-${track.AudioCodec}`;
-      if (seenLangs.has(key)) return;
-      seenLangs.add(key);
-
-      const opt = document.createElement('option');
-      opt.value = `shaka:${track.language}`;
-      opt.textContent = `${track.label || track.language || 'Audio'} (${track.channelsCount || 2}ch)`;
-      if (track.active) opt.selected = true;
-      select.appendChild(opt);
-    });
   }
 
   function switchAudioTrack(val) {
     if (!val) return;
-    const [engine, id] = val.split(':');
-    if (engine === 'hls' && hlsPlayer) {
-      hlsPlayer.audioTrack = parseInt(id, 10);
-      setStatus(`Switched HLS audio track to #${id}`);
-    } else if (engine === 'shaka' && shakaPlayer) {
-      shakaPlayer.selectAudioLanguage(id);
-      setStatus(`Switched Shaka audio language to "${id}"`);
-    }
-  }
-
-  // ============================================================================
-  // 4. AUTHOIPTV M3U & JSON PLAYLIST PARSER (#KODIPROP, #EXTVLCOPT, & Pipe URLs)
-  // ============================================================================
-  async function fetchRemotePlaylist() {
-    const url = document.getElementById('playlistUrl').value.trim();
-    const ua = document.getElementById('playlistUa').value.trim();
-    if (!url) return setStatus('Please enter a playlist URL.');
-
-    setStatus('Fetching playlist...');
-    try {
-      const fetchUrl = (ua || document.getElementById('useProxy').checked)
-        ? buildProxyUrl(url, { userAgent: ua || 'Default' })
-        : url;
-
-      const res = await fetch(fetchUrl);
-      const text = await res.text();
-      parsePlaylistContent(text, url);
-    } catch (e) {
-      setStatus('Failed to fetch playlist. Enabling proxy and retrying...');
-      const proxied = buildProxyUrl(url, { userAgent: ua || 'Default' });
-      const res = await fetch(proxied);
-      const text = await res.text();
-      parsePlaylistContent(text, url);
-    }
+    const [eng, id] = val.split(':');
+    if (eng === 'hls' && hlsPlayer) hlsPlayer.audioTrack = parseInt(id, 10);
   }
 
   function loadLocalPlaylist(event) {
@@ -609,137 +403,90 @@
   }
 
   function parsePlaylistContent(content, sourceName) {
-    const trimmed = content.trim();
-    // JSON Playlist Format Support
-    if (trimmed.startsWith('[') || trimmed.startsWith('{')) {
-      try {
-        const data = JSON.parse(trimmed);
-        const list = Array.isArray(data) ? data : (data.channels || []);
-        allChannels = list.map((item, idx) => {
-          const parsed = parsePipeUrl(item.url || item.streamUrl || '');
-          return {
-            name: item.name || item.title || `Channel ${idx + 1}`,
-            group: item.group || item.category || 'JSON Playlist',
-            logo: item.logo || item.tvgLogo || '',
-            url: parsed.url,
-            cookie: item.cookie || parsed.cookie,
-            referer: item.referer || parsed.referer,
-            origin: item.origin || parsed.origin,
-            userAgent: item.userAgent || parsed.userAgent,
-            drmScheme: item.drmScheme || parsed.drmScheme,
-            drmLicense: item.drmLicense || item.drmKey || parsed.drmLicense
-          };
-        });
-        renderChannels();
-        setStatus(`Loaded ${allChannels.length} channels from JSON playlist.`);
-        return;
-      } catch (e) {
-        setStatus('Invalid JSON playlist format.');
-        return;
-      }
-    }
-
-    // Standard M3U / M3U8 Playlist Parser with #KODIPROP and #EXTVLCOPT
-    const lines = trimmed.split(/\r?\n/);
-    allChannels = [];
-    let current = resetMeta();
-
-    function resetMeta() {
-      return { name: '', group: 'Uncategorized', logo: '', cookie: '', referer: '', origin: '', userAgent: 'Default', drmScheme: 'none', drmLicense: '' };
-    }
+    const lines = content.trim().split(/\r?\n/);
+    const rawChannels = [];
+    const knownDrmByPath = {};
+    let meta = { name: '', group: 'Live', logo: '' };
 
     for (let rawLine of lines) {
       const line = rawLine.trim();
       if (!line) continue;
 
       if (line.startsWith('#EXTINF:')) {
-        const nameMatch = line.split(',');
-        current.name = nameMatch[nameMatch.length - 1].trim();
-        const logoMatch = line.match(/tvg-logo="([^"]+)"/i);
-        if (logoMatch) current.logo = logoMatch[1];
-        const groupMatch = line.match(/group-title="([^"]+)"/i);
-        if (groupMatch) current.group = groupMatch[1];
-      } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_type=')) {
-        const type = line.split('=')[1].trim().toLowerCase();
-        if (type.includes('clearkey')) current.drmScheme = 'clearkey';
-        else if (type.includes('widevine')) current.drmScheme = 'widevine';
-      } else if (line.startsWith('#KODIPROP:inputstream.adaptive.license_key=')) {
-        current.drmLicense = line.substring(line.indexOf('=') + 1).trim();
-      } else if (line.startsWith('#EXTVLCOPT:http-user-agent=')) {
-        current.userAgent = line.substring(line.indexOf('=') + 1).trim();
-      } else if (line.startsWith('#EXTVLCOPT:http-referrer=')) {
-        current.referer = line.substring(line.indexOf('=') + 1).trim();
-      } else if (line.startsWith('#EXTHTTP:')) {
-        try {
-          const httpJson = JSON.parse(line.replace('#EXTHTTP:', '').trim());
-          if (httpJson['cookie'] || httpJson['Cookie']) current.cookie = httpJson['cookie'] || httpJson['Cookie'];
-          if (httpJson['user-agent'] || httpJson['User-Agent']) current.userAgent = httpJson['user-agent'] || httpJson['User-Agent'];
-          if (httpJson['referer'] || httpJson['Referer']) current.referer = httpJson['referer'] || httpJson['Referer'];
-        } catch {}
+        const parts = line.split(',');
+        meta.name = parts[parts.length - 1].trim();
+        const logoM = line.match(/tvg-logo="([^"]+)"/i);
+        meta.logo = logoM ? logoM[1] : '';
+        const groupM = line.match(/group-title="([^"]+)"/i);
+        meta.group = groupM ? groupM[1].split(':')[0].trim() : 'Live';
       } else if (!line.startsWith('#')) {
-        const pipeData = parsePipeUrl(line);
-        allChannels.push({
-          name: current.name || `Stream ${allChannels.length + 1}`,
-          group: current.group,
-          logo: current.logo,
-          url: pipeData.url,
-          cookie: pipeData.cookie || current.cookie,
-          referer: pipeData.referer || current.referer,
-          origin: pipeData.origin || current.origin,
-          userAgent: pipeData.userAgent !== 'Default' ? pipeData.userAgent : current.userAgent,
-          drmScheme: pipeData.drmScheme !== 'none' ? pipeData.drmScheme : current.drmScheme,
-          drmLicense: pipeData.drmLicense || current.drmLicense
+        const parsed = parsePipeUrl(line);
+        const basePath = parsed.url.split('?')[0];
+        if (parsed.drmLicense) {
+          knownDrmByPath[basePath] = { scheme: parsed.drmScheme, license: parsed.drmLicense };
+        }
+        rawChannels.push({
+          ...meta,
+          ...parsed,
+          basePath,
+          lang: detectLanguage(parsed.url),
+          isHevc: parsed.url.includes('h265')
         });
-        current = resetMeta();
+        meta = { name: '', group: 'Live', logo: '' };
       }
     }
 
+    // Backfill missing ClearKey DRM keys onto duplicate links sharing the same .mpd path
+    allChannels = rawChannels.map(ch => {
+      if (!ch.drmLicense && knownDrmByPath[ch.basePath]) {
+        ch.drmScheme = knownDrmByPath[ch.basePath].scheme;
+        ch.drmLicense = knownDrmByPath[ch.basePath].license;
+      }
+      return ch;
+    });
+
     renderChannels();
-    setStatus(`Loaded ${allChannels.length} channels from ${sourceName}.`);
+    setStatus(`Loaded ${allChannels.length} streams from ${sourceName}.`);
   }
 
   function renderChannels() {
-    const query = document.getElementById('channelSearch').value.toLowerCase();
-    const listEl = document.getElementById('channelList');
-    listEl.innerHTML = '';
+    const q = document.getElementById('channelSearch').value.toLowerCase();
+    const container = document.getElementById('channelList');
+    container.innerHTML = '';
 
-    const filtered = allChannels.filter(c =>
-      c.name.toLowerCase().includes(query) || c.group.toLowerCase().includes(query)
-    );
+    allChannels
+      .filter(c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q) || c.lang.toLowerCase().includes(q))
+      .forEach((ch) => {
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        card.innerHTML = `
+          <img class="channel-logo" src="${ch.logo}" onerror="this.style.display='none'">
+          <div class="channel-info">
+            <div class="channel-name">${ch.name}</div>
+            <div class="channel-meta">
+              <span>${ch.group}</span>
+              ${ch.lang ? `<span class="badge lang">${ch.lang}</span>` : ''}
+              ${ch.drmScheme !== 'none' ? `<span class="badge drm">🔒 ${ch.drmScheme.toUpperCase()}</span>` : ''}
+              ${ch.isHevc ? `<span class="badge">HEVC/4K</span>` : ''}
+            </div>
+          </div>
+        `;
+        card.onclick = () => {
+          document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
+          card.classList.add('active');
 
-    filtered.forEach((ch, idx) => {
-      const card = document.createElement('div');
-      card.className = 'channel-card';
-      card.innerHTML = `
-        <img class="channel-logo" src="${ch.logo || 'data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2236%22 height=%2236%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23222%22/></svg>'}" onerror="this.style.display='none'">
-        <div class="channel-info">
-          <div class="channel-name">${ch.name}</div>
-          <div class="channel-group">${ch.group} ${ch.drmScheme !== 'none' ? '• 🔒 ' + ch.drmScheme.toUpperCase() : ''}</div>
-        </div>
-      `;
-      card.onclick = () => {
-        document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
-        card.classList.add('active');
+          document.getElementById('streamUrl').value = ch.url;
+          document.getElementById('cookieVal').value = ch.cookie;
+          document.getElementById('refererVal').value = ch.referer;
+          document.getElementById('originVal').value = ch.origin;
+          document.getElementById('userAgent').value = ch.userAgent;
+          document.getElementById('drmScheme').value = ch.drmScheme;
+          document.getElementById('drmLicense').value = ch.drmLicense;
 
-        // Sync channel metadata to Single Stream inputs
-        document.getElementById('streamUrl').value = ch.url;
-        document.getElementById('cookieVal').value = ch.cookie;
-        document.getElementById('refererVal').value = ch.referer;
-        document.getElementById('originVal').value = ch.origin;
-        document.getElementById('userAgent').value = ch.userAgent;
-        document.getElementById('drmScheme').value = ch.drmScheme;
-        document.getElementById('drmLicense').value = ch.drmLicense;
-
-        const needsProxy = Boolean(ch.cookie || ch.referer || ch.origin || (ch.userAgent && ch.userAgent !== 'Default'));
-        if (needsProxy) document.getElementById('useProxy').checked = true;
-
-        startPlayback({
-          ...ch,
-          useProxy: document.getElementById('useProxy').checked
-        });
-      };
-      listEl.appendChild(card);
-    });
+          startPlayback({ ...ch, useProxy: document.getElementById('useProxy').checked });
+        };
+        container.appendChild(card);
+      });
   }
 </script>
 </body>
