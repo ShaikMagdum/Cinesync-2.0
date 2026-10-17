@@ -1,7 +1,6 @@
 export async function onRequest(context) {
   const { request } = context;
 
-  // 1. Handle CORS Preflight
   if (request.method === 'OPTIONS') {
     return new Response(null, {
       headers: {
@@ -14,30 +13,33 @@ export async function onRequest(context) {
 
   const reqUrl = new URL(request.url);
   const targetUrl = reqUrl.searchParams.get('url');
-
-  if (!targetUrl) {
-    return new Response('Missing "url" parameter', { status: 400 });
-  }
+  if (!targetUrl) return new Response('Missing "url" parameter', { status: 400 });
 
   let parsedTarget;
   try {
     parsedTarget = new URL(targetUrl);
   } catch {
-    return new Response('Invalid "url" parameter', { status: 400 });
+    return new Response('Invalid target URL', { status: 400 });
   }
 
-  // 2. Attach Custom Headers (Cookie, Referer, Origin, User-Agent)
   const upstreamHeaders = new Headers();
   const cookie = reqUrl.searchParams.get('cookie');
   const referer = reqUrl.searchParams.get('referer');
   const origin = reqUrl.searchParams.get('origin');
   const ua = reqUrl.searchParams.get('ua');
 
+  // Default to Hotstar/Android User-Agent if streaming from hotstar/slivcdn without explicit UA
+  if (ua && ua !== 'Default') {
+    upstreamHeaders.set('User-Agent', ua);
+  } else if (parsedTarget.hostname.includes('hotstar.com')) {
+    upstreamHeaders.set('User-Agent', 'Hotstar;in.startv.hotstar/25.02.24.8.11169 (Android/15)');
+  } else {
+    upstreamHeaders.set('User-Agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36');
+  }
+
   if (cookie) upstreamHeaders.set('Cookie', cookie);
   if (referer) upstreamHeaders.set('Referer', referer);
   if (origin) upstreamHeaders.set('Origin', origin);
-  if (ua) upstreamHeaders.set('User-Agent', ua);
-
   if (request.headers.has('Range')) {
     upstreamHeaders.set('Range', request.headers.get('Range'));
   }
@@ -52,22 +54,48 @@ export async function onRequest(context) {
     const contentType = response.headers.get('content-type') || '';
     const responseHeaders = new Headers(response.headers);
     responseHeaders.set('Access-Control-Allow-Origin', '*');
-    responseHeaders.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
+    responseHeaders.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Set-Cookie');
 
-    // 3. If HLS Manifest (.m3u8), rewrite relative segment/sub-playlist URLs to absolute URLs
-    // so hls.js can proxy sub-playlists and .ts segments seamlessly
+    // Extract any Set-Cookie (like hdntl) returned by Akamai/Hotstar to pass down to child requests
+    const setCookieHeader = response.headers.get('set-cookie');
+    let inheritedCookie = cookie || '';
+    if (setCookieHeader) {
+      const extracted = setCookieHeader.split(';')[0];
+      if (extracted && !inheritedCookie.includes(extracted)) {
+        inheritedCookie = inheritedCookie ? `${inheritedCookie}; ${extracted}` : extracted;
+      }
+    }
+
+    // Rewrite HLS (.m3u8) relative paths into full proxied URLs so segments keep cookies & tokens
     if (parsedTarget.pathname.endsWith('.m3u8') || contentType.includes('mpegurl')) {
       const text = await response.text();
-      const baseUrl = new URL('.', parsedTarget.toString()).toString();
+      const finalUrl = response.url || parsedTarget.toString();
+      const baseUrl = new URL('.', finalUrl).toString();
+      const parentQuery = new URL(finalUrl).search; // Carry over hdnea/hdntl query tokens if needed
 
-      const rewritten = text.split('\n').map(line => {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) return line;
-        try {
-          return new URL(trimmed, baseUrl).toString();
-        } catch {
-          return line;
+      const wrapInProxy = (rawChildUrl) => {
+        let absUrl = new URL(rawChildUrl, baseUrl).toString();
+        // If child segment/playlist doesn't have hdnea/hdntl token, append parent query
+        if (!absUrl.includes('hdnea=') && !absUrl.includes('hdntl=') && parentQuery) {
+          absUrl += (absUrl.includes('?') ? '&' : '') + parentQuery.replace(/^\?/, '');
         }
+        const p = new URL('/proxy', reqUrl.origin);
+        p.searchParams.set('url', absUrl);
+        if (inheritedCookie) p.searchParams.set('cookie', inheritedCookie);
+        if (referer) p.searchParams.set('referer', referer);
+        if (origin) p.searchParams.set('origin', origin);
+        if (ua) p.searchParams.set('ua', ua);
+        return p.toString();
+      };
+
+      const rewritten = text.split(/\r?\n/).map(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return line;
+        // Rewrite URI="..." inside #EXT-X-MEDIA or #EXT-X-KEY tags
+        if (trimmed.startsWith('#')) {
+          return line.replace(/URI="([^"]+)"/g, (match, uri) => `URI="${wrapInProxy(uri)}"`);
+        }
+        return wrapInProxy(trimmed);
       }).join('\n');
 
       return new Response(rewritten, {
