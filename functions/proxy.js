@@ -19,7 +19,7 @@ export async function onRequest(context) {
   try {
     parsedTarget = new URL(targetUrl);
   } catch {
-    return new Response('Invalid target URL', { status: 400 });
+    return new Response('Invalid "url" parameter', { status: 400 });
   }
 
   const upstreamHeaders = new Headers();
@@ -28,7 +28,6 @@ export async function onRequest(context) {
   const origin = reqUrl.searchParams.get('origin');
   const ua = reqUrl.searchParams.get('ua');
 
-  // Default to Hotstar/Android User-Agent if streaming from hotstar/slivcdn without explicit UA
   if (ua && ua !== 'Default') {
     upstreamHeaders.set('User-Agent', ua);
   } else if (parsedTarget.hostname.includes('hotstar.com')) {
@@ -56,7 +55,6 @@ export async function onRequest(context) {
     responseHeaders.set('Access-Control-Allow-Origin', '*');
     responseHeaders.set('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Set-Cookie');
 
-    // Extract any Set-Cookie (like hdntl) returned by Akamai/Hotstar to pass down to child requests
     const setCookieHeader = response.headers.get('set-cookie');
     let inheritedCookie = cookie || '';
     if (setCookieHeader) {
@@ -66,16 +64,14 @@ export async function onRequest(context) {
       }
     }
 
-    // Rewrite HLS (.m3u8) relative paths into full proxied URLs so segments keep cookies & tokens
     if (parsedTarget.pathname.endsWith('.m3u8') || contentType.includes('mpegurl')) {
       const text = await response.text();
       const finalUrl = response.url || parsedTarget.toString();
       const baseUrl = new URL('.', finalUrl).toString();
-      const parentQuery = new URL(finalUrl).search; // Carry over hdnea/hdntl query tokens if needed
+      const parentQuery = new URL(finalUrl).search;
 
       const wrapInProxy = (rawChildUrl) => {
         let absUrl = new URL(rawChildUrl, baseUrl).toString();
-        // If child segment/playlist doesn't have hdnea/hdntl token, append parent query
         if (!absUrl.includes('hdnea=') && !absUrl.includes('hdntl=') && parentQuery) {
           absUrl += (absUrl.includes('?') ? '&' : '') + parentQuery.replace(/^\?/, '');
         }
@@ -91,7 +87,6 @@ export async function onRequest(context) {
       const rewritten = text.split(/\r?\n/).map(line => {
         const trimmed = line.trim();
         if (!trimmed) return line;
-        // Rewrite URI="..." inside #EXT-X-MEDIA or #EXT-X-KEY tags
         if (trimmed.startsWith('#')) {
           return line.replace(/URI="([^"]+)"/g, (match, uri) => `URI="${wrapInProxy(uri)}"`);
         }
