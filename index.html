@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AuthoIPTV & NS Stream Player</title>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.5.15/hls.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css">
+  <title>JSPlayer (Video.js) Streaming Interface</title>
+  <!-- Video.js Stylesheet & Script -->
+  <link href="https://vjs.zencdn.net/8.10.0/video-js.css" rel="stylesheet" />
+  <script src="https://vjs.zencdn.net/8.10.0/video.min.js"></script>
   <style>
     :root {
       --bg: #121212;
@@ -30,15 +30,15 @@
     @media (max-width: 900px) { .workspace { grid-template-columns: 1fr; overflow-y: auto; } }
     .player-section { padding: 18px; display: flex; flex-direction: column; gap: 12px; overflow-y: auto; }
     .video-container { width: 100%; aspect-ratio: 16 / 9; background: #000; border-radius: 8px; overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,0.6); }
-    video { width: 100%; height: 100%; }
-    .toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); flex-wrap: wrap; gap: 10px; font-size: 13px; }
+    .video-js { width: 100%; height: 100%; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; background: var(--surface); padding: 10px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 13px; }
     .side-panel { background: var(--surface); border-left: 1px solid var(--border); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
     .panel-view { display: none; flex-direction: column; gap: 12px; height: 100%; }
     .panel-view.active { display: flex; }
     .input-group { position: relative; }
     .input-group label { position: absolute; top: -8px; left: 10px; background: var(--surface); padding: 0 5px; font-size: 11px; color: var(--muted); }
     input, select, textarea { width: 100%; padding: 11px; background: transparent; border: 1.5px solid var(--border); border-radius: 6px; color: var(--text); font-size: 13px; outline: none; }
-    input:focus, select:focus, textarea:focus { border-color: var(--primary); }
+    input:focus, select:focus { border-color: var(--primary); }
     select option { background: var(--surface); color: var(--text); }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .btn-primary { background: var(--primary); color: #fff; border: none; padding: 11px; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 13px; }
@@ -50,7 +50,6 @@
     .channel-name { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .channel-meta { font-size: 11px; color: var(--muted); display: flex; gap: 6px; align-items: center; margin-top: 2px; }
     .badge { font-size: 10px; padding: 1px 5px; border-radius: 4px; background: #383838; color: #ddd; font-weight: 600; }
-    .badge.drm { background: #4a2318; color: #ffab91; }
     .badge.lang { background: #1b3a4b; color: #80deea; }
     #statusBox { font-size: 12px; color: #ffab91; font-family: monospace; word-break: break-all; }
   </style>
@@ -59,35 +58,29 @@
 
 <header>
   <div class="brand">
-    <span>AuthoIPTV Web Player</span>
+    <span>JSPlayer (Video.js) Web Streamer</span>
     <span class="engine-badge" id="activeEngineBadge">Ready</span>
   </div>
   <div class="nav-tabs">
     <button class="tab-btn active" id="btnTabPlaylist" onclick="switchTab('playlist')">Playlist Channels</button>
-    <button class="tab-btn" id="btnTabSingle" onclick="switchTab('single')">Single Stream (NS Mode)</button>
+    <button class="tab-btn" id="btnTabSingle" onclick="switchTab('single')">Single Stream</button>
   </div>
 </header>
 
 <div class="workspace">
   <div class="player-section">
-    <div class="video-container" data-shaka-player-container>
-      <video autoplay controls data-shaka-player id="video"></video>
+    <div class="video-container">
+      <video id="my-video" class="video-js vjs-big-play-centered" controls preload="auto" data-setup='{}'></video>
     </div>
 
     <div class="toolbar">
-      <div style="display:flex; align-items:center; gap:8px;">
-        <label>Audio:</label>
-        <select id="audioTrackSelect" onchange="switchAudioTrack(this.value)" style="width:150px; padding:6px;">
-          <option value="">Default</option>
-        </select>
-      </div>
       <label style="cursor:pointer; display:flex; align-items:center; gap:6px;">
         <input type="checkbox" id="useProxy" checked style="width:auto;">
         Use Cloudflare Proxy (Bypasses CORS & Injects Headers)
       </label>
     </div>
 
-    <div id="statusBox">Select any channel on the right to start streaming.</div>
+    <div id="statusBox">Select any channel from your playlist to begin.</div>
   </div>
 
   <div class="side-panel">
@@ -95,23 +88,22 @@
     <div id="tab-playlist" class="panel-view active">
       <div class="row">
         <div class="input-group">
-          <label>Upload .m3u / .m3u8 File</label>
+          <label>Upload Playlist File</label>
           <input type="file" accept=".m3u,.m3u8,.txt" onchange="loadLocalPlaylist(event)" style="padding:7px;">
         </div>
         <div class="input-group">
           <label>Search Channels</label>
-          <input type="text" id="channelSearch" placeholder="Search match, show, lang..." oninput="renderChannels()">
+          <input type="text" id="channelSearch" placeholder="Search match..." oninput="renderChannels()">
         </div>
       </div>
-
       <div class="channel-list" id="channelList"></div>
     </div>
 
-    <!-- SINGLE STREAM (NS PLAYER) TAB -->
+    <!-- SINGLE STREAM TAB -->
     <div id="tab-single" class="panel-view">
       <div class="input-group">
         <label>Media Stream URL (Supports | pipe parameters)</label>
-        <input type="text" id="streamUrl" placeholder="https://.../index.mpd?|Cookie=...&drmLicense=...">
+        <input type="text" id="streamUrl" placeholder="https://.../index.m3u8?|Cookie=...">
       </div>
       <div class="input-group">
         <label>Cookie Value</label>
@@ -120,28 +112,6 @@
       <div class="input-group">
         <label>Referer Value</label>
         <input type="text" id="refererVal">
-      </div>
-      <div class="input-group">
-        <label>Origin Value</label>
-        <input type="text" id="originVal">
-      </div>
-      <div class="input-group">
-        <label>DRM License (KeyID:Key or Server URL)</label>
-        <input type="text" id="drmLicense">
-      </div>
-      <div class="row">
-        <div class="input-group">
-          <label>UserAgent</label>
-          <input type="text" id="userAgent" value="Default">
-        </div>
-        <div class="input-group">
-          <label>DrmScheme</label>
-          <select id="drmScheme">
-            <option value="clearkey">clearkey</option>
-            <option value="widevine">widevine</option>
-            <option value="none">none</option>
-          </select>
-        </div>
       </div>
       <button class="btn-primary" onclick="playFromInputs()">&#9654; Play Stream</button>
     </div>
@@ -157,10 +127,162 @@ https://live13mp.hotstar.com/out/v1/ben/1540082131_bengali_7a5c2b5d/incagbsgallo
 https://live13mp.hotstar.com/out/v1/mal/1540082128_malayalam_d6bfd223/incagbsgallow-biggboss-mal-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
 #EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/3541/1788705493541-b" group-title="Bigg Boss 24/7",Bbs10 Telugu: 24X7 Stream
 https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-tel-2026/f129670ca03b4bb988c841f9bbdce777/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=8f4d329312383c4fd66498fcefa957d0~data=hdntl~hmac=99e3b6c668f7d6bde95da664f26333d481be1bd193bfc1ea8ff4e9cdb1824ff3
-#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/945/1788866480945-b" group-title="Bigg Boss 24/7",Bbs10 Tamil: 24X7 Stream
-https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-tam-2026/0e8f0050df134b708ab297477fbf0e86/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=e67ee7c71e40b2bb4d85bd91cd2ad67e~data=hdntl~hmac=a3806a929c8915ee5758cb0c8aa5e6dbba16becd75f7ddecadb3a2ba0ccb2694
-#EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/7246/1788706787246-b" group-title="Bigg Boss 24/7",Bbs13 Kannada: 24X7 Stream
-https://live13mp.hotstar.com/out/v1/kan/1540082125_kannada_eaa18dac/incagbsgallow-biggboss-kan-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
+</script>
+
+<script>
+  let player = null;
+  let allChannels = [];
+
+  document.addEventListener('DOMContentLoaded', () => {
+    player = videojs('my-video');
+    parsePlaylistContent(document.getElementById('defaultPlaylist').textContent, 'Preloaded Playlist');
+  });
+
+  function setStatus(msg) { document.getElementById('statusBox').textContent = msg; }
+
+  function switchTab(tab) {
+    document.getElementById('btnTabPlaylist').classList.toggle('active', tab === 'playlist');
+    document.getElementById('btnTabSingle').classList.toggle('active', tab === 'single');
+    document.getElementById('tab-playlist').classList.toggle('active', tab === 'playlist');
+    document.getElementById('tab-single').classList.toggle('active', tab === 'single');
+  }
+
+  function parsePipeUrl(rawUrl) {
+    const res = { url: rawUrl.trim(), cookie: '', referer: '', userAgent: 'Default' };
+    if (!res.url.includes('|')) {
+      if (res.url.startsWith('http://')) res.url = res.url.replace('http://', 'https://');
+      return res;
+    }
+
+    const [base, paramStr] = res.url.split('|', 2);
+    res.url = base.replace(/\?$/, '');
+    if (res.url.startsWith('http://')) res.url = res.url.replace('http://', 'https://');
+
+    const regex = /(?:^|&)(cookie|user-agent|referer|origin)=/gi;
+    const matches = [...paramStr.matchAll(regex)];
+
+    for (let i = 0; i < matches.length; i++) {
+      const key = matches[i][1].toLowerCase();
+      const startIdx = matches[i].index + matches[i][0].length;
+      const endIdx = (i + 1 < matches.length) ? matches[i + 1].index : paramStr.length;
+      const rawVal = paramStr.substring(startIdx, endIdx);
+      let val = rawVal;
+      try { val = decodeURIComponent(rawVal); } catch {}
+
+      if (key === 'cookie') res.cookie = val;
+      else if (key === 'referer') res.referer = val;
+      else if (key === 'user-agent') res.userAgent = val;
+    }
+    return res;
+  }
+
+  function buildProxyUrl(targetUrl, cfg) {
+    const proxy = new URL('/proxy', window.location.origin);
+    proxy.searchParams.set('url', targetUrl);
+    if (cfg.cookie) proxy.searchParams.set('cookie', cfg.cookie);
+    if (cfg.referer) proxy.searchParams.set('referer', cfg.referer);
+    if (cfg.userAgent && cfg.userAgent !== 'Default') proxy.searchParams.set('ua', cfg.userAgent);
+    return proxy.toString();
+  }
+
+  function playFromInputs() {
+    startPlayback({
+      url: document.getElementById('streamUrl').value.trim(),
+      cookie: document.getElementById('cookieVal').value.trim(),
+      referer: document.getElementById('refererVal').value.trim(),
+      useProxy: document.getElementById('useProxy').checked
+    });
+  }
+
+  function startPlayback(cfg) {
+    if (!cfg.url) return setStatus('Please provide a valid stream URL.');
+
+    const finalUrl = cfg.useProxy ? buildProxyUrl(cfg.url, cfg) : cfg.url;
+    setStatus('Loading stream via JSPlayer...');
+
+    player.src({
+      src: finalUrl,
+      type: 'application/x-mpegURL'
+    });
+
+    player.ready(() => {
+      player.play().then(() => {
+        setStatus('Playing stream successfully.');
+      }).catch(err => {
+        setStatus(`Playback error or blocked by browser/CDN: ${err.message}`);
+      });
+    });
+  }
+
+  function loadLocalPlaylist(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => parsePlaylistContent(e.target.result, file.name);
+    reader.readAsText(file);
+  }
+
+  function parsePlaylistContent(content, sourceName) {
+    const lines = content.trim().split(/\r?\n/);
+    allChannels = [];
+    let meta = { name: '', group: 'Live', logo: '' };
+
+    for (let rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      if (line.startsWith('#EXTINF:')) {
+        const parts = line.split(',');
+        meta.name = parts[parts.length - 1].trim();
+        const logoM = line.match(/tvg-logo="([^"]+)"/i);
+        meta.logo = logoM ? logoM[1] : '';
+        const groupM = line.match(/group-title="([^"]+)"/i);
+        meta.group = groupM ? groupM[1].split(':')[0].trim() : 'Live';
+      } else if (!line.startsWith('#')) {
+        const parsed = parsePipeUrl(line);
+        allChannels.push({ ...meta, ...parsed });
+        meta = { name: '', group: 'Live', logo: '' };
+      }
+    }
+
+    renderChannels();
+    setStatus(`Loaded ${allChannels.length} streams from ${sourceName}.`);
+  }
+
+  function renderChannels() {
+    const q = document.getElementById('channelSearch').value.toLowerCase();
+    const container = document.getElementById('channelList');
+    container.innerHTML = '';
+
+    allChannels
+      .filter(c => c.name.toLowerCase().includes(q) || c.group.toLowerCase().includes(q))
+      .forEach((ch) => {
+        const card = document.createElement('div');
+        card.className = 'channel-card';
+        card.innerHTML = `
+          <img class="channel-logo" src="${ch.logo}" onerror="this.style.display='none'">
+          <div class="channel-info">
+            <div class="channel-name">${ch.name}</div>
+            <div class="channel-meta"><span>${ch.group}</span></div>
+          </div>
+        `;
+        card.onclick = () => {
+          document.querySelectorAll('.channel-card').forEach(el => el.classList.remove('active'));
+          card.classList.add('active');
+
+          document.getElementById('streamUrl').value = ch.url;
+          document.getElementById('cookieVal').value = ch.cookie;
+          document.getElementById('refererVal').value = ch.referer;
+
+          startPlayback({ ...ch, useProxy: document.getElementById('useProxy').checked });
+        };
+        container.appendChild(card);
+      });
+  }
+</script>
+</body>
+</html>
+v1/kan/1540082125_kannada_eaa18dac/incagbsgallow-biggboss-kan-2026_hls_unencrypted/master-ap.m3u8?a=ns&hdnea=exp=1792322836~acl=%2f*~id=80701c8a0f38f0b69438f3cff8abd9fa~data=hdntl~hmac=703bed51305b98d4634fc6a5ddad0b7191ef75927abf5da120e5aaf6c9932928
 #EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/1183/1792173961183-b" group-title="Bigg Boss 24/7",Bbs20 Hindi: 24 Hrs Channel
 https://live09p.hotstar.com/mp2/incagbsgallow-biggboss-hin-2026/93e0d4ee03b34575bbf8f8a55824de63/index.m3u8?aws.manifestfilter=video_height:0-1080&hdnea=exp=1792327759~acl=%2f*~id=8f4d329312383c4fd66498fcefa957d0~data=hdntl~hmac=99e3b6c668f7d6bde95da664f26333d481be1bd193bfc1ea8ff4e9cdb1824ff3
 #EXTINF:-1 tvg-logo="https://img1.hotstarext.com/image/upload/sources/r1/cms/prod/817/1792164450817-b" group-title="Badminton",BWF World Junior Championships 2026: Finals
